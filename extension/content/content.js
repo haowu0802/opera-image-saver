@@ -135,8 +135,10 @@
     spinKeyframeAdded = true;
   }
 
-  // Track the current save task so we can match SAVE_RESULT messages
-  let currentSaveId = null;
+  // Track the active save so we can match SAVE_RESULT to the correct image.
+  // If the user moves to a different image before the result arrives,
+  // we must NOT update the overlay — only show a toast.
+  let activeSave = null; // { id, img }
   let saveTimeoutTimer = null;
   const SAVE_TIMEOUT_MS = 60000; // reset spinner after 60s even if no response
 
@@ -154,15 +156,21 @@
     setOverlayState('saving');
     const filenameHint = extractFilename(imgUrl, currentImg);
 
-    // Fire and forget — background responds immediately with {started: true}
+    // Capture the image element being saved so we can verify later
+    const savedImg = currentImg;
+
+    // Fire and forget — background responds immediately with {started: true, id}
     // The actual result comes back via SAVE_RESULT message (best-effort).
     chrome.runtime.sendMessage(
       { type: 'SAVE_IMAGE', url: imgUrl, filename: filenameHint },
       (response) => {
         if (chrome.runtime.lastError || !response || !response.started) {
-          setOverlayState('error');
+          if (currentImg === savedImg) setOverlayState('error');
           showToast('Failed to start download', 'error');
-          resetOverlayAfterDelay();
+          if (currentImg === savedImg) resetOverlayAfterDelay();
+        } else {
+          // Track this save — used to verify SAVE_RESULT matches the right image
+          activeSave = { id: response.id, img: savedImg };
         }
         // If started successfully, keep spinner — result comes via SAVE_RESULT
       }
@@ -172,7 +180,14 @@
     // The save may still complete in the background — check History.
     clearTimeout(saveTimeoutTimer);
     saveTimeoutTimer = setTimeout(() => {
-      if (overlay && overlay.classList.contains('saving')) {
+      // Only reset if still showing the spinner for the same image
+      if (
+        activeSave &&
+        activeSave.img === savedImg &&
+        currentImg === savedImg &&
+        overlay &&
+        overlay.classList.contains('saving')
+      ) {
         overlay.className = 'img-saver-overlay';
         overlay.innerHTML = SAVE_ICON_SVG;
         showToast('Save still processing — check History', 'info');
@@ -185,14 +200,36 @@
     if (message.type === 'SAVE_RESULT') {
       clearTimeout(saveTimeoutTimer);
 
-      if (message.success) {
-        setOverlayState('saved');
-        showToast(`Saved: ${message.filename}`, 'success');
+      // Determine if the result is for the image currently displayed.
+      // If the user moved to another image, only show a toast — don't
+      // touch the overlay (it would wrongly mark the new image as saved/failed).
+      const isCurrentImage =
+        activeSave &&
+        activeSave.id === message.id &&
+        currentImg === activeSave.img;
+
+      if (isCurrentImage) {
+        if (message.success) {
+          setOverlayState('saved');
+          showToast(`Saved: ${message.filename}`, 'success');
+        } else {
+          setOverlayState('error');
+          showToast(`Failed: ${message.error}`, 'error');
+        }
+        resetOverlayAfterDelay();
       } else {
-        setOverlayState('error');
-        showToast(`Failed: ${message.error}`, 'error');
+        // Result is for a different image — just notify via toast
+        if (message.success) {
+          showToast(`Saved: ${message.filename}`, 'success');
+        } else {
+          showToast(`Failed: ${message.error}`, 'error');
+        }
       }
-      resetOverlayAfterDelay();
+
+      // Clear tracking if this result matches the active save
+      if (activeSave && activeSave.id === message.id) {
+        activeSave = null;
+      }
     }
   });
 

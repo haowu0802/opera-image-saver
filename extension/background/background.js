@@ -6,8 +6,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case 'SAVE_IMAGE':
       // Respond immediately so content script doesn't block on page refresh
-      handleSaveImageRequest(message, sender);
-      sendResponse({ success: true, started: true });
+      // Include the save ID so content script can match SAVE_RESULT to the right image
+      const entry = handleSaveImageRequest(message, sender);
+      sendResponse({ success: true, started: true, id: entry.id });
       return false; // don't keep channel open — save runs independently
 
     case 'RETRY_DOWNLOAD':
@@ -69,6 +70,8 @@ function handleSaveImageRequest(message, sender) {
       }
     })
     .catch(() => { /* already handled inside doSave */ });
+
+  return entry; // Return entry so caller can access the ID
 }
 
 async function handleRetry(historyId) {
