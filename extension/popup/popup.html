@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+  <title>Image Saver</title>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Image Saver</h1>
+      <div class="tabs">
+        <button id="tabSettings" class="tab active">Settings</button>
+        <button id="tabHistory" class="tab">History</button>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settingsPanel" class="panel">
+      <div class="section">
+        <label for="savePath">Save Folder Path</label>
+        <input type="text" id="savePath" placeholder="C:\Users\haowu\Pictures\saved_images" spellcheck="false">
+        <p class="hint">Images will be saved to this folder. Folder is created automatically if it doesn't exist.</p>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-primary">Save</button>
+        <button id="testBtn" class="btn btn-secondary">Test Connection</button>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div class="footer">
+        <p>Hover any image on a webpage and click the save icon to download it.</p>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="historyPanel" class="panel" style="display:none;">
+      <div class="history-toolbar">
+        <span id="historyCount" class="history-count"></span>
+        <button id="clearHistoryBtn" class="btn btn-sm btn-secondary">Clear All</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <div class="history-empty">No downloads yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

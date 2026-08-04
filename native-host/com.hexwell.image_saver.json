@@ -1,0 +1,9 @@
+{
+  "name": "com.hexwell.image_saver",
+  "description": "Image Saver Native Host - saves web images to a local folder",
+  "path": "C:\\_code\\opera-image-saver\\native-host\\run_host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://mabcellokonpfeadpdclofjgpkpgobok/"
+  ]
+}

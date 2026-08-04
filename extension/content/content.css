@@ -1,0 +1,80 @@
+.img-saver-overlay {
+  position: absolute;
+  z-index: 2147483647;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  backdrop-filter: blur(4px);
+}
+
+.img-saver-overlay:hover {
+  background: rgba(66, 88, 209, 0.9);
+  transform: scale(1.1);
+}
+
+.img-saver-overlay:active {
+  transform: scale(0.95);
+}
+
+.img-saver-overlay svg {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.img-saver-overlay.saving {
+  background: rgba(255, 152, 0, 0.9);
+  cursor: wait;
+}
+
+.img-saver-overlay.saved {
+  background: rgba(76, 175, 80, 0.9);
+  cursor: default;
+}
+
+.img-saver-overlay.error {
+  background: rgba(244, 67, 54, 0.9);
+  cursor: default;
+}
+
+/* Toast notification */
+.img-saver-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #fff;
+  background: rgba(33, 33, 33, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  max-width: 360px;
+}
+
+.img-saver-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.img-saver-toast.success {
+  background: rgba(46, 125, 50, 0.95);
+}
+
+.img-saver-toast.error {
+  background: rgba(198, 40, 40, 0.95);
+}
