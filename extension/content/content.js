@@ -67,7 +67,7 @@
 
   function positionOverlay(rect) {
     const top = rect.top + window.scrollY + 6;
-    let left = rect.right + window.scrollX - 38;
+    let left = rect.left + window.scrollX + 6;
     // Keep overlay within viewport horizontally
     const maxLeft = window.scrollX + window.innerWidth - 40;
     if (left > maxLeft) left = maxLeft;
