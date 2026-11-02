@@ -5,6 +5,7 @@ const settingsPanel = document.getElementById('settingsPanel');
 const historyPanel = document.getElementById('historyPanel');
 
 const savePathInput = document.getElementById('savePath');
+const pathHistoryEl = document.getElementById('pathHistory');
 const saveBtn = document.getElementById('saveBtn');
 const testBtn = document.getElementById('testBtn');
 const statusEl = document.getElementById('status');
@@ -14,6 +15,10 @@ const historyCount = document.getElementById('historyCount');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
 const NATIVE_HOST_NAME = 'com.hexwell.image_saver';
+const MAX_PATH_HISTORY = 8;
+
+let pathHistory = [];
+let currentSavePath = '';
 
 // ---- Tab switching ----
 tabSettings.addEventListener('click', () => switchTab('settings'));
@@ -36,10 +41,65 @@ function switchTab(tab) {
 
 // ---- Settings ----
 
-chrome.storage.local.get(['savePath'], (result) => {
-  if (result.savePath) {
-    savePathInput.value = result.savePath;
+function normalizePathKey(path) {
+  return path.trim().replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase();
+}
+
+function rememberPath(path) {
+  const trimmed = path.trim();
+  if (!trimmed) return pathHistory.slice();
+
+  const key = normalizePathKey(trimmed);
+  const next = [trimmed, ...pathHistory.filter((p) => normalizePathKey(p) !== key)];
+  return next.slice(0, MAX_PATH_HISTORY);
+}
+
+function renderPathHistory() {
+  if (!pathHistory.length) {
+    pathHistoryEl.hidden = true;
+    pathHistoryEl.innerHTML = '';
+    return;
   }
+
+  const activeKey = currentSavePath ? normalizePathKey(currentSavePath) : '';
+  pathHistoryEl.hidden = false;
+  pathHistoryEl.innerHTML = pathHistory.map((path) => {
+    const active = activeKey && normalizePathKey(path) === activeKey;
+    return `
+      <div class="path-history-item${active ? ' active' : ''}" data-path="${escapeHtml(path)}" title="${escapeHtml(path)}">
+        <span class="path-history-path">${escapeHtml(path)}</span>
+        <button type="button" class="path-history-remove" data-path="${escapeHtml(path)}" title="Remove from list" aria-label="Remove path">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function setActivePath(path, options = {}) {
+  const trimmed = path.trim();
+  currentSavePath = trimmed;
+  if (options.fillInput !== false) {
+    savePathInput.value = trimmed;
+  }
+  if (options.remember) {
+    pathHistory = rememberPath(trimmed);
+  }
+  renderPathHistory();
+}
+
+chrome.storage.local.get(['savePath', 'savePathHistory'], (result) => {
+  pathHistory = Array.isArray(result.savePathHistory) ? result.savePathHistory.filter(Boolean) : [];
+  if (result.savePath) {
+    currentSavePath = result.savePath;
+    savePathInput.value = result.savePath;
+    const alreadyRemembered = pathHistory.some(
+      (p) => normalizePathKey(p) === normalizePathKey(result.savePath)
+    );
+    if (!alreadyRemembered) {
+      pathHistory = rememberPath(result.savePath);
+      chrome.storage.local.set({ savePathHistory: pathHistory });
+    }
+  }
+  renderPathHistory();
 });
 
 function showStatus(message, type) {
@@ -47,13 +107,43 @@ function showStatus(message, type) {
   statusEl.className = `status show ${type}`;
 }
 
+pathHistoryEl.addEventListener('click', (event) => {
+  const removeBtn = event.target.closest('.path-history-remove');
+  if (removeBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    const removePath = removeBtn.dataset.path || '';
+    const removeKey = normalizePathKey(removePath);
+    pathHistory = pathHistory.filter((p) => normalizePathKey(p) !== removeKey);
+    chrome.storage.local.set({ savePathHistory: pathHistory }, () => {
+      renderPathHistory();
+      showStatus('Path removed from history.', 'info');
+    });
+    return;
+  }
+
+  const item = event.target.closest('.path-history-item');
+  if (!item) return;
+
+  const path = item.dataset.path || '';
+  if (!path) return;
+
+  pathHistory = rememberPath(path);
+  setActivePath(path);
+  chrome.storage.local.set({ savePath: path, savePathHistory: pathHistory }, () => {
+    showStatus('Switched save folder.', 'success');
+  });
+});
+
 saveBtn.addEventListener('click', () => {
   const path = savePathInput.value.trim();
   if (!path) {
     showStatus('Please enter a save folder path.', 'error');
     return;
   }
-  chrome.storage.local.set({ savePath: path }, () => {
+  pathHistory = rememberPath(path);
+  setActivePath(path);
+  chrome.storage.local.set({ savePath: path, savePathHistory: pathHistory }, () => {
     showStatus('Path saved.', 'success');
   });
 });

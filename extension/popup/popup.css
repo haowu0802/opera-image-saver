@@ -103,6 +103,91 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px rgba(66, 88, 209, 0.12);
 }
 
+.path-history {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 148px;
+  overflow-y: auto;
+}
+
+.path-history[hidden] {
+  display: none;
+}
+
+.path-history-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #eceef1;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.path-history-item:hover {
+  border-color: #c5cce8;
+  background: #f4f6fc;
+}
+
+.path-history-item.active {
+  border-color: #4258d1;
+  background: #eef1fb;
+}
+
+.path-history-path {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.path-history-item.active .path-history-path {
+  color: #4258d1;
+  font-weight: 600;
+}
+
+.path-history-remove {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #999;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-history-remove:hover {
+  background: #fbe9e7;
+  color: #c62828;
+}
+
+.path-history::-webkit-scrollbar {
+  width: 5px;
+}
+
+.path-history::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.path-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .hint {
   font-size: 11px;
   color: #888;
